@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/dev-check.js",
+    "prebuild": "node scripts/dev-check.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc -p tsconfig.json --noEmit"
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "studio": "npm --prefix sanity/hormone-group-ie run dev"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
