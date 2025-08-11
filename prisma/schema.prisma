@@ -1,0 +1,59 @@
+// Prisma schema for NextAuth (email provider), Orders, and Form Submissions
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth core models (email magic link flow)
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+
+  sessions      Session[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Commerce: persisted order records from Stripe webhook
+model Order {
+  id               String   @id @default(cuid())
+  email            String
+  stripeCustomerId String?
+  stripeSessionId  String?
+  items            Json
+  shipping         Json?
+  // 'payment' for one-time kit, 'subscription' for monthly
+  mode             String
+  createdAt        DateTime @default(now())
+}
+
+// Generic server form submissions (contact, newsletter, etc.)
+model FormSubmission {
+  id        String   @id @default(cuid())
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+}

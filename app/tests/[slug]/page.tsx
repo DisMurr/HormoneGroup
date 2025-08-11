@@ -1,0 +1,200 @@
+// app/tests/[slug]/page.tsx
+import { notFound, redirect } from 'next/navigation'
+import type { Metadata } from 'next'
+import { sanityClient } from '@/lib/sanity/client'
+import { productBySlugQuery } from '@/lib/sanity/queries'
+
+type Product = {
+  _id: string
+  title: string
+  slug: string
+  priceEUR?: number
+  turnaround?: string
+  sampleType?: string
+  markers?: string[]
+  whyItMatters?: string[]
+  symptoms?: string[]
+  whatYouGet?: string[]
+  stripePriceIdOneTime?: string
+  stripePriceIdSubscription?: string
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { slug: string }
+}): Promise<Metadata> {
+  const pretty = params.slug.replace(/-/g, ' ')
+  return {
+    title: `${pretty} | Hormone Group IE`,
+    openGraph: { title: `${pretty} | Hormone Group IE` },
+    alternates: {
+      canonical: `${
+        process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+      }/tests/${params.slug}`,
+    },
+  }
+}
+
+/** JSON-LD for Product rich results */
+function ProductJsonLd({ prod }: { prod: Product }) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const url = `${site}/tests/${prod.slug}`
+
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: prod.title,
+    sku: prod._id,
+    url,
+    ...(prod.priceEUR != null
+      ? {
+          offers: {
+            '@type': 'Offer',
+            priceCurrency: 'EUR',
+            price: prod.priceEUR,
+            availability: 'https://schema.org/InStock',
+            url,
+          },
+        }
+      : {}),
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  )
+}
+
+/** Server Action → calls your /api/checkout/create and redirects to Stripe */
+async function createCheckoutAction(formData: FormData) {
+  'use server'
+  const priceId = formData.get('priceId')?.toString()
+  const cancelPath = formData.get('cancelPath')?.toString() || '/tests'
+  const successPath = '/thanks'
+
+  if (!priceId) {
+    throw new Error('Missing Stripe priceId')
+  }
+
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+  const res = await fetch(`${base}/api/checkout/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ priceId, successPath, cancelPath }),
+    cache: 'no-store',
+  })
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '')
+    throw new Error(`Checkout failed: ${msg || res.status}`)
+  }
+
+  const data = (await res.json()) as { url?: string }
+  if (data?.url) {
+    redirect(data.url)
+  }
+  throw new Error('Checkout failed: no redirect URL returned')
+}
+
+export default async function ProductPage({
+  params,
+}: {
+  params: { slug: string }
+}) {
+  const product = (await sanityClient.fetch(
+    productBySlugQuery,
+    { slug: params.slug },
+    { next: { revalidate: 60 } }
+  )) as Product | null
+
+  if (!product) return notFound()
+
+  const priceId =
+    product.stripePriceIdOneTime ||
+    process.env.NEXT_PUBLIC_STRIPE_DEFAULT_PRICE_ID ||
+    ''
+
+  return (
+    <main className="mx-auto max-w-3xl px-6 py-12">
+      <ProductJsonLd prod={product} />
+
+      <h1 className="text-3xl font-semibold">{product.title}</h1>
+
+      <p className="mt-2 text-gray-700">
+        {product.priceEUR != null ? <>€{product.priceEUR} • </> : null}
+        {product.sampleType}
+        {product.sampleType && product.turnaround ? ' • ' : ''}
+        {product.turnaround}
+      </p>
+
+      <div className="mt-5">
+        {priceId ? (
+          <form action={createCheckoutAction}>
+            <input type="hidden" name="priceId" value={priceId} />
+            <input type="hidden" name="cancelPath" value={`/tests/${product.slug}`} />
+            <button
+              type="submit"
+              className="inline-flex items-center rounded bg-black px-4 py-2 text-white hover:opacity-90"
+            >
+              Order kit
+            </button>
+          </form>
+        ) : (
+          <p className="text-sm text-red-600">
+            Checkout not configured yet. Add <code>stripePriceIdOneTime</code> to this product
+            in Sanity or set <code>NEXT_PUBLIC_STRIPE_DEFAULT_PRICE_ID</code> in your .env.
+          </p>
+        )}
+      </div>
+
+      <section className="mt-8">
+        <h2 className="text-xl font-medium">What this test measures</h2>
+        {product.markers?.length ? (
+          <ul className="list-disc ml-6 mt-2">
+            {product.markers.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-600 mt-2">See product details above.</p>
+        )}
+      </section>
+
+      {product.whyItMatters?.length ? (
+        <section className="mt-8">
+          <h2 className="text-xl font-medium">Why it matters</h2>
+          <ul className="list-disc ml-6 mt-2">
+            {product.whyItMatters.map((x, i) => (
+              <li key={i}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {product.symptoms?.length ? (
+        <section className="mt-8">
+          <h2 className="text-xl font-medium">Common symptoms</h2>
+          <ul className="list-disc ml-6 mt-2">
+            {product.symptoms.map((x, i) => (
+              <li key={i}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {product.whatYouGet?.length ? (
+        <section className="mt-8">
+          <h2 className="text-xl font-medium">What you get</h2>
+          <ul className="list-disc ml-6 mt-2">
+            {product.whatYouGet.map((x, i) => (
+              <li key={i}>{x}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </main>
+  )
+}
