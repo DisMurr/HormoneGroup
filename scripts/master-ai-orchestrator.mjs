@@ -1,0 +1,368 @@
+// scripts/master-ai-orchestrator.mjs
+import { AIAgent } from '../lib/ai-agent.mjs'
+import { StripeAIAgent } from './stripe-ai-agent.mjs'
+import { SanityAIAgent } from './sanity-ai-agent.mjs'  
+import { DatabaseAIA  async routeToAgent(params) {
+    // Handle both direct request and params object patterns
+    const request = params.request || params.requestType || Object.values(params)[0] || 'general query'
+    const requestLower = request.toLowerCase()
+    
+    // Enhanced intelligent routing with new agents (core working agents only for now)
+    if (requestLower.includes('payment') || requestLower.includes('stripe') || requestLower.includes('revenue') || requestLower.includes('financial') || requestLower.includes('billing')) {
+      return await this.stripeAgent.processRequest(request)
+    } else if (requestLower.includes('product') || requestLower.includes('content') || requestLower.includes('sanity') || requestLower.includes('cms')) {
+      return await this.sanityAgent.processRequest(request)
+    } else if (requestLower.includes('database') || requestLower.includes('order') || requestLower.includes('user') || requestLower.includes('data')) {
+      return await this.databaseAgent.processRequest(request) './database-ai-agent.mjs'
+import 'dotenv/config'
+
+class MasterAIOrchestrator extends AIAgent {
+  constructor() {
+    // Initialize all sub-agents
+    const orchestratorTools = [
+      {
+        name: 'system_health_check',
+        aliases: ['health', 'status', 'check-all'],
+        description: 'Check health of all systems (Stripe, Sanity, Database)',
+        execute: async () => this.checkAllSystems()
+      },
+      {
+        name: 'full_workflow_test',
+        aliases: ['workflow', 'test-workflow', 'integration-test'],
+        description: 'Run complete workflow integration test',
+        execute: async (params) => this.runWorkflowTest(params)
+      },
+      {
+        name: 'coordinate_agents',
+        aliases: ['coordinate', 'multi-agent', 'cross-system'],
+        description: 'Coordinate multiple agents for complex operations',
+        execute: async (params) => this.coordinateAgents(params)
+      },
+      {
+        name: 'intelligent_routing',
+        aliases: ['route', 'delegate', 'smart-routing'],
+        description: 'Intelligently route requests to appropriate agents',
+        execute: async (params) => this.routeToAgent(params)
+      },
+      {
+        name: 'system_analysis',
+        aliases: ['analyze', 'insights', 'overview'],
+        description: 'Provide comprehensive system analysis and insights',
+        execute: async () => this.generateSystemAnalysis()
+      },
+      {
+        name: 'automated_fixes',
+        aliases: ['fix', 'auto-fix', 'resolve'],
+        description: 'Attempt to automatically fix common issues',
+        execute: async (params) => this.attemptAutomaticFixes(params)
+      }
+    ]
+
+    super('Master AI Orchestrator', 'multi-agent coordination and intelligent system management', orchestratorTools)
+    
+    // Initialize core sub-agents that are working
+    this.stripeAgent = new StripeAIAgent()
+    this.sanityAgent = new SanityAIAgent()
+    this.databaseAgent = new DatabaseAIAgent()
+  }
+
+  buildSystemPrompt(context) {
+    const basePrompt = super.buildSystemPrompt(context)
+    
+    return basePrompt + `
+
+MASTER ORCHESTRATOR CAPABILITIES:
+- You are the Master AI Orchestrator managing a complete e-commerce system
+- Coordinate between 3 core specialized AI agents: Stripe, Sanity, Database
+- Additional specialized agents available for advanced operations
+- Understand complex multi-system workflows and dependencies
+- Provide intelligent routing of requests to appropriate specialized agents
+- Perform system-wide analysis and optimization recommendations
+
+CORE AI AGENTS:
+- Stripe Agent: Payments, billing, revenue, financial analysis
+- Sanity Agent: Content management, product catalog, CMS operations
+- Database Agent: Data storage, order management, user data, performance
+
+SYSTEM ARCHITECTURE UNDERSTANDING:
+- Sanity CMS → Product Management → Auto-provision to Stripe → Payment Processing → Orders saved to Database
+- Webhooks enable automation: Sanity webhook → Stripe provisioning, Stripe webhook → Database storage
+- Health monitoring across all three core systems is critical
+- Data consistency between systems must be maintained
+
+INTELLIGENT ROUTING LOGIC:
+- Payment/billing/revenue questions → Stripe Agent
+- Content/product catalog/CMS questions → Sanity Agent  
+- Data/orders/users/database questions → Database Agent
+- Multi-system/integration questions → Handle directly with coordination
+
+COORDINATION STRATEGIES:
+- For product creation: Create in Sanity → Provision to Stripe → Monitor database for orders
+- For analysis requests: Gather data from all relevant systems → Synthesize insights  
+- For troubleshooting: Check system health → Identify root cause → Coordinate fixes
+- For optimization: Analyze patterns across systems → Recommend improvements
+- For business intelligence: Coordinate all available agents for comprehensive analysis
+
+When users ask about:
+- Multi-system operations → coordinate_agents
+- "workflow" or "integration" → full_workflow_test
+- "health" or "status" → system_health_check
+- "analyze" or "insights" → system_analysis
+- "fix" or "resolve" → automated_fixes
+- Specific domain questions → intelligent_routing
+
+Always think holistically about the entire business ecosystem across all functional areas.`
+  }
+
+  async checkAllSystems() {
+    console.log('🔍 Checking health of all systems...')
+    
+    const [stripeHealth, sanityHealth, databaseHealth] = await Promise.all([
+      this.stripeAgent.processRequest('get account status').catch(e => ({ error: e.message })),
+      this.sanityAgent.processRequest('get studio info').catch(e => ({ error: e.message })),
+      this.databaseAgent.processRequest('test connection').catch(e => ({ error: e.message }))
+    ])
+
+    return {
+      overall: 'System Health Check Complete',
+      stripe: {
+        status: stripeHealth.success ? '🟢 Healthy' : '🔴 Issues',
+        details: stripeHealth.toolResult || stripeHealth.error
+      },
+      sanity: {
+        status: sanityHealth.success ? '🟢 Healthy' : '🔴 Issues', 
+        details: sanityHealth.toolResult || sanityHealth.error
+      },
+      database: {
+        status: databaseHealth.success ? '🟢 Healthy' : '🔴 Issues',
+        details: databaseHealth.toolResult || databaseHealth.error
+      },
+      timestamp: new Date().toISOString()
+    }
+  }
+
+  async runWorkflowTest(params = {}) {
+    console.log('🧪 Running complete workflow integration test...')
+    
+    try {
+      // Step 1: Create test product in Sanity
+      const productName = params.productName || `AI Test Product ${Date.now()}`
+      const productSlug = params.productSlug || `ai-test-${Date.now()}`
+      const price = params.price || 29
+
+      const sanityResult = await this.sanityAgent.processRequest(
+        `create product "${productName}" with slug "${productSlug}" price ${price} description "AI orchestrated test product"`
+      )
+
+      if (!sanityResult.success) {
+        throw new Error(`Sanity product creation failed: ${sanityResult.error}`)
+      }
+
+      // Step 2: Check if product can be provisioned to Stripe
+      const stripeResult = await this.stripeAgent.processRequest(
+        `create product "${productName}" with description "AI test product"`
+      )
+
+      // Step 3: Monitor database for any related activity
+      const databaseResult = await this.databaseAgent.processRequest('get recent stats and check connection')
+
+      return {
+        workflow: 'AI Orchestrated Integration Test',
+        steps: {
+          sanityCreation: sanityResult,
+          stripeProvisioning: stripeResult,
+          databaseMonitoring: databaseResult
+        },
+        success: sanityResult.success && stripeResult.success && databaseResult.success,
+        recommendations: [
+          'Test product created successfully',
+          'Manual webhook trigger may be needed for full automation',
+          'Consider setting up automated testing pipeline'
+        ],
+        timestamp: new Date().toISOString()
+      }
+      
+    } catch (error) {
+      return {
+        workflow: 'AI Orchestrated Integration Test',
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }
+    }
+  }
+
+  async coordinateAgents(params) {
+    const { operation, target } = params
+    
+    switch (operation) {
+      case 'sync_product':
+        // Coordinate product sync between Sanity and Stripe
+        const product = await this.sanityAgent.processRequest(`get product details for ${target}`)
+        if (product.success) {
+          return await this.stripeAgent.processRequest(`create product from sanity data`)
+        }
+        break
+        
+      case 'analyze_revenue':
+        // Coordinate revenue analysis across Stripe and Database
+        const [stripeData, dbData] = await Promise.all([
+          this.stripeAgent.processRequest('financial summary'),
+          this.databaseAgent.processRequest('analyze orders and revenue')
+        ])
+        
+        return {
+          coordinated: 'Revenue Analysis',
+          stripe: stripeData,
+          database: dbData,
+          insights: 'Cross-system revenue analysis complete'
+        }
+        
+      default:
+        return { error: 'Unknown coordination operation', availableOperations: ['sync_product', 'analyze_revenue'] }
+    }
+  }
+
+  async routeToAgent(params) {
+    const { request } = params
+    const requestLower = request.toLowerCase()
+    
+    // Core agent routing (working agents only)
+    if (requestLower.includes('payment') || requestLower.includes('stripe') || requestLower.includes('checkout') || requestLower.includes('billing')) {
+      return await this.stripeAgent.processRequest(request)
+    } else if (requestLower.includes('product') || requestLower.includes('content') || requestLower.includes('sanity') || requestLower.includes('cms')) {
+      return await this.sanityAgent.processRequest(request)
+    } else if (requestLower.includes('database') || requestLower.includes('order') || requestLower.includes('user') || requestLower.includes('data')) {
+      return await this.databaseAgent.processRequest(request)
+    } else {
+      // Default to system analysis for ambiguous requests
+      return await this.generateSystemAnalysis()
+    }
+  }
+
+  async generateSystemAnalysis() {
+    console.log('📊 Generating comprehensive system analysis...')
+    
+    const [stripeInfo, sanityInfo, databaseInfo] = await Promise.all([
+      this.stripeAgent.processRequest('financial summary and account status').catch(e => ({ error: e.message })),
+      this.sanityAgent.processRequest('content analysis and sync status').catch(e => ({ error: e.message })),
+      this.databaseAgent.processRequest('performance check and data integrity').catch(e => ({ error: e.message }))
+    ])
+
+    const analysis = {
+      systemOverview: {
+        timestamp: new Date().toISOString(),
+        overallHealth: 'Analysis Complete'
+      },
+      stripe: {
+        status: stripeInfo.success ? 'Operational' : 'Issues Detected',
+        summary: stripeInfo.toolResult || stripeInfo.error,
+        recommendations: stripeInfo.success ? ['Continue monitoring'] : ['Check Stripe configuration']
+      },
+      sanity: {
+        status: sanityInfo.success ? 'Operational' : 'Issues Detected', 
+        summary: sanityInfo.toolResult || sanityInfo.error,
+        recommendations: sanityInfo.success ? ['Content looks good'] : ['Review CMS configuration']
+      },
+      database: {
+        status: databaseInfo.success ? 'Operational' : 'Issues Detected',
+        summary: databaseInfo.toolResult || databaseInfo.error,
+        recommendations: databaseInfo.success ? ['Database performing well'] : ['Check database connectivity']
+      },
+      masterRecommendations: [
+        'Regular health monitoring recommended',
+        'Consider automated testing pipeline',
+        'Webhook automation reduces manual work',
+        'Monitor system performance metrics'
+      ]
+    }
+
+    return analysis
+  }
+
+  async attemptAutomaticFixes(params) {
+    const { issue } = params
+    
+    console.log(`🔧 Attempting to automatically resolve: ${issue}`)
+    
+    const fixAttempts = []
+    
+    // Common automatic fixes
+    if (issue?.includes('connection') || issue?.includes('health')) {
+      fixAttempts.push(await this.checkAllSystems())
+    }
+    
+    if (issue?.includes('sync') || issue?.includes('integration')) {
+      fixAttempts.push(await this.sanityAgent.processRequest('check integration status'))
+    }
+    
+    return {
+      issue: issue,
+      fixAttempts: fixAttempts,
+      success: fixAttempts.every(attempt => !attempt.error),
+      recommendations: [
+        'Automatic fixes attempted',
+        'Manual review may be required for complex issues',
+        'Contact system administrator if issues persist'
+      ],
+      timestamp: new Date().toISOString()
+    }
+  }
+
+  async getSystemContext() {
+    // Aggregate context from all systems
+    const contexts = await Promise.all([
+      this.stripeAgent.getSystemContext().catch(() => ({})),
+      this.sanityAgent.getSystemContext().catch(() => ({})),
+      this.databaseAgent.getSystemContext().catch(() => ({}))
+    ])
+
+    return {
+      master: {
+        orchestrator: 'Master AI Orchestrator',
+        managingSystems: ['Stripe', 'Sanity', 'Database'],
+        aiModel: this.model
+      },
+      systems: {
+        stripe: contexts[0],
+        sanity: contexts[1], 
+        database: contexts[2]
+      },
+      timestamp: new Date().toISOString()
+    }
+  }
+
+  async processRequest(userRequest) {
+    const context = await this.getSystemContext()
+    return await this.process(userRequest, context)
+  }
+}
+
+// CLI interface
+async function main() {
+  const request = process.argv.slice(2).join(' ') || 'system health check'
+  const orchestrator = new MasterAIOrchestrator()
+  
+  try {
+    console.log('🤖 Master AI Orchestrator starting...')
+    const result = await orchestrator.processRequest(request)
+    
+    console.log('\n=== MASTER AI ORCHESTRATOR RESULT ===')
+    console.log(JSON.stringify(result, null, 2))
+    
+    if (result.humanMessage) {
+      console.log('\n💬 AI Response:')
+      console.log(result.humanMessage)
+    }
+    
+  } catch (error) {
+    console.error('❌ Master AI Orchestrator error:', error.message)
+    console.log('\n💡 Try: npm run ai:master "analyze entire system" or "run workflow test"')
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main()
+}
+
+export { MasterAIOrchestrator }

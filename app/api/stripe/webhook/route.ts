@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from 'next-sanity'
+import { PrismaClient } from '@prisma/client'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   // Leave apiVersion unspecified to use library default; safer with changing dates
@@ -13,6 +14,21 @@ const sanity = createClient({
   token: process.env.SANITY_WRITE_TOKEN, // needed if we upsert back to Sanity
   useCdn: false,
 })
+
+let prisma: PrismaClient
+
+declare global {
+  var __prisma: PrismaClient | undefined
+}
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient()
+} else {
+  if (!global.__prisma) {
+    global.__prisma = new PrismaClient()
+  }
+  prisma = global.__prisma
+}
 
 export async function POST(req: Request) {
   const sig = req.headers.get('stripe-signature')
@@ -62,8 +78,40 @@ export async function POST(req: Request) {
         break
       }
       case 'checkout.session.completed': {
-        // TODO: record order/fulfillment; you can read:
-        // const session = event.data.object as Stripe.Checkout.Session
+        const session = event.data.object as Stripe.Checkout.Session
+        
+        try {
+          // Get full session details with line items
+          const sessionWithItems = await stripe.checkout.sessions.retrieve(session.id, {
+            expand: ['line_items', 'line_items.data.price.product']
+          })
+          
+          const lineItems = sessionWithItems.line_items?.data || []
+          const items = lineItems.map(item => ({
+            name: typeof item.price?.product === 'object' && 'name' in item.price.product 
+              ? item.price.product.name || 'Unknown Product' 
+              : 'Unknown Product',
+            price: item.price ? item.price.unit_amount! / 100 : 0, // Convert cents to euros
+            quantity: item.quantity || 1,
+            priceId: item.price?.id
+          }))
+
+          // Save order to database
+          const order = await prisma.order.create({
+            data: {
+              email: session.customer_details?.email || session.customer_email || 'unknown@example.com',
+              stripeSessionId: session.id,
+              items: items,
+              mode: session.mode || 'payment'
+            }
+          })
+
+          console.log('✅ Order saved to database:', order.id, 'for session:', session.id)
+          
+        } catch (err) {
+          console.error('❌ Failed to save order to database:', err)
+        }
+        
         break
       }
       default:
