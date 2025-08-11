@@ -2,7 +2,13 @@
 import { AIAgent } from '../lib/ai-agent.mjs'
 import { StripeAIAgent } from './stripe-ai-agent.mjs'
 import { SanityAIAgent } from './sanity-ai-agent.mjs'  
-import { DatabaseAIA  async routeToAgent(params) {
+import { DatabaseAIAgent } from './database-ai-agent.mjs'
+import 'dotenv/config'
+
+class MasterAIOrchestrator extends AIAgent {
+  constructor() {
+    // Enhanced intelligent routing with management capabilities
+    async routeToAgent(params) {
     // Handle both direct request and params object patterns
     const request = params.request || params.requestType || Object.values(params)[0] || 'general query'
     const requestLower = request.toLowerCase()
