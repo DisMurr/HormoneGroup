@@ -6,13 +6,8 @@ import {schemaTypes} from './schemaTypes'
 export default defineConfig({
   name: 'default',
   title: 'Hormone Group IE',
-
   projectId: 'fnv8ttx3',
   dataset: 'production',
-
   plugins: [structureTool(), visionTool()],
-
-  schema: {
-    types: schemaTypes,
-  },
+  schema: {types: schemaTypes},
 })
