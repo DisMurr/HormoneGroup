@@ -20,6 +20,10 @@ const readClient = createClient({ projectId, dataset, apiVersion, useCdn: false 
 const writeClient = createClient({ projectId, dataset, apiVersion, token: writeToken, useCdn: false })
 
 export async function POST(req: NextRequest) {
+  // Refuse to use live Stripe key in dev
+  if (process.env.NODE_ENV !== 'production' && process.env.STRIPE_SECRET_KEY?.startsWith('sk_live')) {
+    return NextResponse.json({ error: 'Refusing to use live Stripe key in dev.' }, { status: 400 })
+  }
   const expected = process.env.PROVISION_SECRET ? `Bearer ${process.env.PROVISION_SECRET}` : ''
   const got = req.headers.get('authorization') ?? ''
   if (!process.env.PROVISION_SECRET || got !== expected) {
@@ -53,6 +57,7 @@ export async function POST(req: NextRequest) {
   // Use the library's default API version (types currently expect a specific pinned version)
   const stripe = new Stripe(stripeKey)
 
+
   let { stripeProductId, stripePriceIdOneTime } = product
 
   // Create Stripe product if missing
@@ -64,11 +69,35 @@ export async function POST(req: NextRequest) {
     stripeProductId = created.id
   }
 
-  // Create one-time price if missing
-  if (!stripePriceIdOneTime) {
-    const amount = typeof product.priceEUR === 'number' ? Math.round(product.priceEUR * 100) : null
-    if (!amount) return NextResponse.json({ error: 'priceEUR missing on product' }, { status: 400 })
+  // Always compute amount for priceEUR
+  const amount = typeof product.priceEUR === 'number' ? Math.round(product.priceEUR * 100) : null
+  if (!amount) return NextResponse.json({ error: 'priceEUR missing on product' }, { status: 400 })
 
+  // If price exists, check if amount changed; if so, create new price
+  if (stripePriceIdOneTime) {
+    try {
+      const current = await stripe.prices.retrieve(stripePriceIdOneTime)
+      if (typeof amount === 'number' && current.unit_amount !== amount) {
+        const newPrice = await stripe.prices.create({
+          currency: 'eur',
+          unit_amount: amount,
+          product: stripeProductId!,
+        })
+        stripePriceIdOneTime = newPrice.id
+      }
+    } catch {
+      // If retrieval fails, create a fresh price
+      if (typeof amount === 'number') {
+        const newPrice = await stripe.prices.create({
+          currency: 'eur',
+          unit_amount: amount,
+          product: stripeProductId!,
+        })
+        stripePriceIdOneTime = newPrice.id
+      }
+    }
+  } else {
+    // No price exists, create one
     const created = await stripe.prices.create({
       currency: 'eur',
       unit_amount: amount,

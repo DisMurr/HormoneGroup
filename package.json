@@ -6,6 +6,9 @@
     "test:e2e": "playwright test --project=chromium",
     "predev": "node scripts/dev-check.js",
     "prebuild": "node scripts/dev-check.js",
+    "agent:ask": "node -r dotenv/config scripts/agent-ask.mjs",
+    "agent:provision": "node -r dotenv/config scripts/agent-ask.mjs provision",
+    "agent:checkout": "node -r dotenv/config scripts/agent-ask.mjs checkout",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -13,8 +16,8 @@
     "type-check": "tsc -p tsconfig.json --noEmit",
     "studio": "npm --prefix sanity/hormone-group-ie run dev",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/stripe/webhook --print-secret",
-  "sync:stripe": "node scripts/stripe-sync-from-sanity.js",
-  "provision": "node -r dotenv/config scripts/provision-one.mjs"
+    "sync:stripe": "node scripts/stripe-sync-from-sanity.js",
+    "provision": "node -r dotenv/config scripts/provision-one.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
