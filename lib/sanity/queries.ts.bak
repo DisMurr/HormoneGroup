@@ -19,7 +19,5 @@ export const productBySlugQuery = groq`*[_type=="product" && slug.current==$slug
   markers,
   whyItMatters,
   symptoms,
-  whatYouGet,
-  stripePriceIdOneTime,
-  stripePriceIdSubscription
+  whatYouGet
 }`
