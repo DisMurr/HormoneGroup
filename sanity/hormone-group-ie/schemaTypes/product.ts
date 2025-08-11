@@ -20,5 +20,6 @@ export default defineType({
     defineField({ name: 'stripePriceIdOneTime', title: 'Stripe Price ID (one-time)', type: 'string' }),
     defineField({ name: 'stripePriceIdSubscription', title: 'Stripe Price ID (subscription)', type: 'string' }),
     defineField({name:'flags', type:'object', fields:[defineField({name:'subscription', type:'boolean'})]}),
+    defineField({ name: 'stripeProductId', title: 'Stripe Product ID', type: 'string' }),
   ],
 })

@@ -1,6 +1,7 @@
 "use client"
 import * as React from 'react'
-import useEmblaCarousel, { type EmblaOptionsType } from 'embla-carousel-react'
+import useEmblaCarousel from 'embla-carousel-react'
+import type { EmblaOptionsType } from 'embla-carousel'
 import { cn } from '@/lib/utils'
 
 export function Carousel({ className, options, children }: { className?: string; options?: EmblaOptionsType; children: React.ReactNode }) {

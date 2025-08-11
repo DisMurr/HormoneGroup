@@ -11,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc -p tsconfig.json --noEmit",
-    "studio": "npm --prefix sanity/hormone-group-ie run dev"
+    "studio": "npm --prefix sanity/hormone-group-ie run dev",
+    "stripe:listen": "stripe listen --forward-to localhost:3000/api/stripe/webhook --print-secret",
+  "sync:stripe": "node scripts/stripe-sync-from-sanity.js",
+  "provision": "node -r dotenv/config scripts/provision-one.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -61,6 +64,7 @@
     "prisma": "^6.13.0",
     "shadcn-ui": "^0.9.5",
     "tailwindcss": "3.4.10",
-    "typescript": "5.5.4"
+  "typescript": "5.5.4",
+  "dotenv": "^16.4.5"
   }
 }
