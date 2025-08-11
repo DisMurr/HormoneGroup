@@ -1,19 +1,18 @@
-import { defineConfig } from 'sanity'
-import { deskTool } from 'sanity/desk'
-import { visionTool } from '@sanity/vision'
-import { schemaTypes } from './schemas'
-
-const projectId = process.env.SANITY_PROJECT_ID || ''
-const dataset = process.env.SANITY_DATASET || 'production'
+import {defineConfig} from 'sanity'
+import {structureTool} from 'sanity/structure'
+import {visionTool} from '@sanity/vision'
+import {schemaTypes} from './schemas'
 
 export default defineConfig({
-  name: 'hormonegroup-studio',
-  title: 'Hormone Group Studio',
-  projectId,
-  dataset,
-  basePath: '/studio',
-  plugins: [deskTool(), visionTool()],
-  schema: {
-    types: schemaTypes,
-  },
+  name: 'default',
+  title: 'Hormone Group IE',
+  projectId: 'fnv8ttx3',
+  dataset: 'production',
+  plugins: [structureTool(), visionTool()],
+  schema: {types: schemaTypes},
 })
+
+
+
+
+
