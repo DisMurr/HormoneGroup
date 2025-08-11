@@ -1,6 +1,7 @@
 import siteSettings from './siteSettings'
 import page from './page'
 import product from './product'
+import category from './category'
 import faq from './faq'
 import post from './post'
 import testimonial from './testimonial'
@@ -14,6 +15,7 @@ export const schemaTypes = [
   siteSettings,
   page,
   product,
+  category,
   faq,
   post,
   testimonial,
@@ -21,3 +23,5 @@ export const schemaTypes = [
   nav,
   footer,
 ]
+
+
