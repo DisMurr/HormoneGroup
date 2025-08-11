@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:e2e": "playwright test --project=chromium",
     "predev": "node scripts/dev-check.js",
     "prebuild": "node scripts/dev-check.js",
     "dev": "next dev",
