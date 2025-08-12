@@ -92,3 +92,4 @@ function warn(msg) {
 
   console.log('✅  Env check passed. You are good to go.\n');
 })();
+
