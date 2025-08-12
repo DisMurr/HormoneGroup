@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { provisionProduct } from '@/lib/provisionProduct'
+export const preferredRegion = process.env.EU_FUNCTION_REGION
 
 // Sanity webhook endpoint. Configure webhook with:
 //  URL: <site>/api/webhooks/sanity/product
@@ -8,6 +9,9 @@ import { provisionProduct } from '@/lib/provisionProduct'
 //  Secret header: Authorization: Bearer <PROVISION_SECRET>
 
 export async function POST(req: Request) {
+  if (process.env.NODE_ENV !== 'production' && (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_live')) {
+    return NextResponse.json({ error: 'Refusing to use live Stripe key in dev.' }, { status: 400 })
+  }
   const auth = req.headers.get('authorization') || ''
   const expected = `Bearer ${process.env.PROVISION_SECRET}`
   if (!process.env.PROVISION_SECRET || auth !== expected) {

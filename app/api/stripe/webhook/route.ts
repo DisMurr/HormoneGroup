@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+export const preferredRegion = process.env.EU_FUNCTION_REGION
 import { createClient } from 'next-sanity'
 import { PrismaClient } from '@prisma/client'
 
@@ -31,6 +32,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export async function POST(req: Request) {
+  if (process.env.NODE_ENV !== 'production' && (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_live')) {
+    return NextResponse.json({ error: 'Refusing to use live Stripe key in non-production.' }, { status: 400 })
+  }
   const sig = req.headers.get('stripe-signature')
   const secret = process.env.STRIPE_WEBHOOK_SECRET
 

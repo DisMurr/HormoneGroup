@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
+export const preferredRegion = process.env.EU_FUNCTION_REGION
 
 export async function POST(req: Request) {
   const { priceId, successPath = '/thanks', cancelPath = '/tests' } = await req.json()
   const key = process.env.STRIPE_SECRET_KEY
   if (!key) return NextResponse.json({ error: 'Missing STRIPE_SECRET_KEY' }, { status: 400 })
   if (!priceId) return NextResponse.json({ error: 'Missing priceId' }, { status: 400 })
+
+  if (process.env.NODE_ENV !== 'production' && (process.env.STRIPE_SECRET_KEY || '').startsWith('sk_live')) {
+    return NextResponse.json({ error: 'Refusing to use live Stripe key in non-production.' }, { status: 400 })
+  }
 
   const site = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
   const stripe = new Stripe(key)
@@ -18,7 +23,7 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      shipping_address_collection: { allowed_countries: ['IE','GB','DE','FR','ES','IT','NL'] },
+      shipping_address_collection: { allowed_countries: ['IE'] },
       metadata: {}, // place for product slug/id later if you want
     })
 

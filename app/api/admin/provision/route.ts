@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+export const preferredRegion = process.env.EU_FUNCTION_REGION
 import Stripe from 'stripe'
 import { createClient } from 'next-sanity'
 

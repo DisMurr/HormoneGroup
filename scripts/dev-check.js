@@ -84,12 +84,19 @@ function warn(msg) {
   if (stripeKeys.some((k) => !env[k])) {
     warn('Stripe keys not set. Checkout and webhooks will be disabled or mocked in dev.');
   }
-
-  const sanityKeys = ['SANITY_PROJECT_ID', 'SANITY_DATASET'];
-  if (sanityKeys.some((k) => !env[k]) && env.CMS_DOWN_FALLBACK !== 'mdx') {
-    warn('Sanity not configured. Set CMS_DOWN_FALLBACK=mdx to render without CMS in dev.');
+  if (env.NODE_ENV !== 'production' && String(env.STRIPE_SECRET_KEY || '').startsWith('sk_live')) {
+    warn('Live Stripe key (sk_live…) detected while NODE_ENV≠production. API routes will refuse live keys in dev.');
   }
 
+  const sanityKeys = ['SANITY_PROJECT_ID', 'SANITY_DATASET'];
+  const sanityMissing = sanityKeys.some((k) => !env[k])
+  if (sanityMissing && env.CMS_DOWN_FALLBACK !== 'mdx') {
+    fail('Sanity not configured. Provide SANITY_PROJECT_ID and SANITY_DATASET or set CMS_DOWN_FALLBACK=mdx to render without CMS in dev.');
+  } else if (sanityMissing) {
+    warn('Running with CMS_DOWN_FALLBACK=mdx because Sanity is not configured.');
+  }
+
+  console.log(`Flags → AFFILIATES_ENABLED=${String(env.AFFILIATES_ENABLED || 'false')}  LOYALTY_ENABLED=${String(env.LOYALTY_ENABLED || 'false')}`);
   console.log('✅  Env check passed. You are good to go.\n');
 })();
 
