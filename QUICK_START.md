@@ -1,4 +1,4 @@
-# 🚀 QUICK START - NEW MACHINE SETUP
+﻿# 🚀 QUICK START - NEW MACHINE SETUP
 *HormoneGroup.ie Enhanced AI Agent Ecosystem*
 
 ## ONE-COMMAND SETUP

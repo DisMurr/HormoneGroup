@@ -1,4 +1,4 @@
-# 🚀 HIGH-PERFORMANCE MACHINE MIGRATION GUIDE
+﻿# 🚀 HIGH-PERFORMANCE MACHINE MIGRATION GUIDE
 *HormoneGroup.ie Enhanced AI Agent Ecosystem*
 *Generated: August 11, 2025*
 

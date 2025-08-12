@@ -47,11 +47,16 @@
     "github:ai": "node -r dotenv/config scripts/github-ai-agent.mjs",
     "supabase:ai": "node -r dotenv/config scripts/supabase-ai-agent.mjs",
     "ai:master": "node -r dotenv/config scripts/master-ai-orchestrator.mjs",
+    "ai:enhanced": "node -r dotenv/config scripts/enhanced-master-orchestrator.mjs",
     "ai:test": "node -r dotenv/config scripts/master-ai-orchestrator.mjs run workflow test",
     "ai:analyze": "node -r dotenv/config scripts/master-ai-orchestrator.mjs system analysis",
     "ai:health": "node -r dotenv/config scripts/master-ai-orchestrator.mjs system health check",
     "ai:route": "node -r dotenv/config scripts/master-ai-orchestrator.mjs intelligent routing",
-    "ai:complete": "node -r dotenv/config scripts/master-ai-orchestrator.mjs comprehensive business analysis"
+    "ai:complete": "node -r dotenv/config scripts/master-ai-orchestrator.mjs comprehensive business analysis",
+    "stripe:ai:v2": "node -r dotenv/config scripts/stripe-ai-agent-v2.mjs",
+    "stripe:financial": "node -r dotenv/config scripts/stripe-ai-agent-v2.mjs financial health analysis",
+    "stripe:optimize": "node -r dotenv/config scripts/stripe-ai-agent-v2.mjs revenue optimization",
+    "ai:benchmark": "node -r dotenv/config scripts/enhanced-master-orchestrator.mjs performance benchmark"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.59.0",

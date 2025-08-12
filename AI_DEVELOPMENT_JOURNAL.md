@@ -1,4 +1,4 @@
-# AI System Development Journal
+﻿# AI System Development Journal
 *Project: HormoneGroup.ie AI Agent Ecosystem*
 *Started: August 11, 2025*
 
