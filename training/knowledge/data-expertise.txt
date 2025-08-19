@@ -1,0 +1,9 @@
+DATABASE ANALYTICS EXPERTISE:
+- Query performance optimization
+- Predictive analytics modeling
+- Customer behavior analysis
+- Real-time performance monitoring
+- Data quality assurance
+- Business intelligence reporting
+- Anomaly detection systems
+- Scalable data architectures

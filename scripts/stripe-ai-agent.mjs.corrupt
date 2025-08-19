@@ -1,0 +1,273 @@
+// scripts/stripe-ai-agent.mjs
+import { AIAgent } from '../lib/ai-agent.mjs'
+import { StripeAgent } from './stripe-agent.mjs'
+import 'dotenv/config'
+
+class StripeAIAgent extends AIAgent {
+  constructor() {
+    // Initialize base Stripe agent
+    const stripeAgent = new StripeAgent()
+    
+    // Define Stripe-specific tools
+    const stripeTools = [
+      {
+        name: 'get_account_info',
+        aliases: ['account', 'info'],
+        description: 'Get Stripe account information and status',
+        execute: async () => stripeAgent.runCommand('account')
+      },
+      {
+        name: 'list_products',
+        aliases: ['products', 'list-products'],
+        description: 'List all Stripe products',
+        execute: async () => stripeAgent.runCommand('list-products')
+      },
+      {
+        name: 'list_prices',
+        aliases: ['prices', 'list-prices'],
+        description: 'List all Stripe prices',
+        execute: async () => stripeAgent.runCommand('list-prices')
+      },
+      {
+        name: 'create_product',
+        aliases: ['create', 'add-product'],
+        description: 'Create a new Stripe product',
+        execute: async (params) => stripeAgent.runCommand('create-product', params.name, params.description)
+      },
+      {
+        name: 'create_price',
+        aliases: ['add-price', 'pricing'],
+        description: 'Create pricing for a product',
+        execute: async (params) => stripeAgent.runCommand('create-price', params.productId, params.amount, params.currency || 'eur')
+      },
+      {
+        name: 'get_payment_methods',
+        aliases: ['payment-methods', 'methods'],
+        description: 'List available payment methods',
+        execute: async () => stripeAgent.runCommand('list-payment-methods')
+      },
+      {
+        name: 'analyze_transactions',
+        aliases: ['transactions', 'payments'],
+        description: 'Analyze recent transactions and payments',
+        execute: async () => stripeAgent.runCommand('list-charges')
+      },
+      {
+        name: 'create_checkout_session',
+        aliases: ['checkout', 'session'],
+        description: 'Create a checkout session for a product',
+        execute: async (params) => {
+          // Use the API to create checkout session
+          const response = await fetch('http://localhost:3000/api/checkout/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              priceId: params.priceId,
+              successPath: params.successPath || '/thanks',
+              cancelPath: params.cancelPath || '/tests'
+            })
+          })
+          return response.json()
+        }
+      },
+      {
+        name: 'setup_webhook',
+        aliases: ['webhook', 'webhooks'],
+        description: 'Setup or manage Stripe webhooks',
+        execute: async (params) => stripeAgent.runCommand('create-webhook', params.url, params.events)
+      },
+      {
+        name: 'financial_summary',
+        aliases: ['summary', 'financial', 'revenue'],
+        description: 'Generate comprehensive financial summary and business insights',
+        execute: async () => {
+          const [account, products, prices, charges] = await Promise.all([
+            stripeAgent.runCommand('account'),
+            stripeAgent.runCommand('list-products'),
+            stripeAgent.runCommand('list-prices'),
+            stripeAgent.runCommand('list-charges')
+          ])
+          
+          return {
+            account: account,
+            summary: {
+              totalProducts: products.length,
+              totalPrices: prices.length,
+              currency: account.default_currency || 'eur'
+            },
+            products,
+            pricing: prices,
+            recentActivity: charges
+          }
+        }
+      },
+      {
+        name: 'revenue_forecast',
+        aliases: ['forecast', 'predict', 'projection'],
+        description: 'Generate revenue forecasts and growth projections',
+        execute: async () => {
+          const products = await stripeAgent.runCommand('list-products')
+          const prices = await stripeAgent.runCommand('list-prices')
+          
+          return this.generateRevenueForcast(products, prices)
+        }
+      },
+      {
+        name: 'pricing_analysis',
+        aliases: ['pricing', 'price-analysis', 'optimize-pricing'],
+        description: 'Analyze pricing strategy and optimization opportunities',
+        execute: async () => {
+          const prices = await stripeAgent.runCommand('list-prices')
+          return this.analyzePricingStrategy(prices)
+        }
+      },
+      {
+        name: 'customer_insights',
+        aliases: ['customers', 'customer-analysis', 'insights'],
+        description: 'Generate customer behavior insights and segmentation',
+        execute: async () => {
+          const charges = await stripeAgent.runCommand('list-charges')
+          return this.generateCustomerInsights(charges)
+        }
+      },
+      {
+        name: 'conversion_metrics',
+        aliases: ['conversion', 'metrics', 'performance'],
+        description: 'Calculate conversion metrics and performance indicators',
+        execute: async () => {
+          return this.calculateConversionMetrics()
+        }
+      },
+      {
+        name: 'competitive_benchmarks',
+        aliases: ['benchmark', 'competition', 'market-analysis'],
+        description: 'Compare performance against industry benchmarks',
+        execute: async () => {
+          const account = await stripeAgent.runCommand('account')
+          const products = await stripeAgent.runCommand('list-products')
+          return this.generateCompetitiveBenchmarks(account, products)
+        }
+      },
+      {
+        name: 'financial_health_check',
+        aliases: ['health', 'financial-health', 'check'],
+        description: 'Comprehensive financial health assessment',
+        execute: async () => {
+          const [account, products, prices] = await Promise.all([
+            stripeAgent.runCommand('account'),
+            stripeAgent.runCommand('list-products'),
+            stripeAgent.runCommand('list-prices')
+          ])
+          
+          },
+        handler: async () => {
+          // Get all financial data
+          const [account, products, prices, charges] = await Promise.all([
+            this.stripeAgent.stripe.accounts.retrieve(),
+            this.stripeAgent.stripe.products.list({ limit: 100 }),
+            this.stripeAgent.stripe.prices.list({ limit: 100 }),
+            this.stripeAgent.stripe.charges.list({ limit: 10 })
+          ])
+          
+          const healthAssessment = await this.assessFinancialHealth(account, products, prices)
+          return {
+            ...healthAssessment,
+            recentActivity: charges
+          }
+        }
+        }
+      }
+    ]
+
+    super('Stripe AI Agent', 'payment processing, subscription management, and financial operations', stripeTools)
+    this.stripeAgent = stripeAgent
+  }
+
+  buildSystemPrompt(context) {
+    const basePrompt = super.buildSystemPrompt(context)
+    
+    return basePrompt + `
+
+STRIPE-SPECIFIC KNOWLEDGE:
+- You specialize in Stripe payment processing, subscriptions, and financial operations
+- Always think about security when handling payment data
+- Consider both one-time payments and recurring subscriptions
+- Be aware of different currencies (EUR is primary for HormoneGroup)
+- Understand webhook events and their importance for automation
+- Know about test vs live mode implications
+
+COMMON STRIPE OPERATIONS:
+- Creating products and prices for new offerings
+- Setting up checkout sessions for purchases
+- Managing webhooks for automation
+- Analyzing transaction data and financial summaries
+- Troubleshooting payment issues
+
+When users ask about:
+- "revenue" or "money" → use financial_summary
+- "new product" → use create_product then create_price
+- "checkout" or "buy" → use create_checkout_session
+- "webhook" → use setup_webhook or check existing ones
+- "status" → use get_account_info
+- "products" → use list_products
+- "pricing" → use list_prices
+
+Always provide actionable financial insights and consider business impact.`
+  }
+
+  async getSystemContext() {
+    try {
+      const [account, products, prices] = await Promise.all([
+        this.stripeAgent.runCommand('account').catch(() => null),
+        this.stripeAgent.runCommand('list-products').catch(() => []),
+        this.stripeAgent.runCommand('list-prices').catch(() => [])
+      ])
+
+      return {
+        stripe: {
+          account: account,
+          totalProducts: products.length,
+          totalPrices: prices.length,
+          mode: account?.isLiveMode ? 'live' : 'test',
+          currency: account?.default_currency || 'eur'
+        },
+        timestamp: new Date().toISOString()
+      }
+    } catch (error) {
+      return { error: 'Unable to fetch Stripe context', timestamp: new Date().toISOString() }
+    }
+  }
+
+  async processRequest(userRequest) {
+    const context = await this.getSystemContext()
+    return await this.process(userRequest, context)
+  }
+}
+
+// CLI interface
+async function main() {
+  const request = process.argv.slice(2).join(' ') || 'help'
+  const agent = new StripeAIAgent()
+  
+  try {
+    const result = await agent.processRequest(request)
+    
+    console.log('\n=== STRIPE AI AGENT RESULT ===')
+    console.log(JSON.stringify(result, null, 2))
+    
+    if (result.humanMessage) {
+      console.log('\n💬 AI Response:')
+      console.log(result.humanMessage)
+    }
+    
+  } catch (error) {
+    console.error('❌ Stripe AI Agent error:', error.message)
+    console.log('\n💡 Try: npm run stripe:ai "list products" or "create checkout session for product abc"')
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main()
+}
+
+export { StripeAIAgent }

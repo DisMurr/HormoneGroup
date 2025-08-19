@@ -1,0 +1,21 @@
+{
+  "version": "2.0",
+  "training_date": "2025-08-12",
+  "agents": {
+    "stripe": {
+      "expertise": "financial_operations",
+      "level": "expert",
+      "focus": ["revenue_optimization", "pricing_strategy", "risk_assessment"]
+    },
+    "sanity": {
+      "expertise": "content_management", 
+      "level": "expert",
+      "focus": ["content_optimization", "seo", "catalog_management"]
+    },
+    "database": {
+      "expertise": "data_analytics",
+      "level": "advanced", 
+      "focus": ["performance_optimization", "analytics", "reporting"]
+    }
+  }
+}
